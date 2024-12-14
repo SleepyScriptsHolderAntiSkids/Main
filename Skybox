@@ -1,0 +1,43 @@
+return {
+    Default = {
+        SkyboxBk = "rbxassetid://12345678",
+        SkyboxDn = "rbxassetid://12345679",
+        SkyboxFt = "rbxassetid://12345680",
+        SkyboxLf = "rbxassetid://12345681",
+        SkyboxRt = "rbxassetid://12345682",
+        SkyboxUp = "rbxassetid://12345683"
+    },
+    Neptune = {
+        SkyboxBk = "rbxassetid://11844135854", -- Blue Nebula
+        SkyboxDn = "rbxassetid://11844135854",
+        SkyboxFt = "rbxassetid://11844135854",
+        SkyboxLf = "rbxassetid://11844135854",
+        SkyboxRt = "rbxassetid://11844135854",
+        SkyboxUp = "rbxassetid://11844135854"
+    },
+    AmongUs = {
+        SkyboxBk = "rbxassetid://230057997", -- Placeholder
+        SkyboxDn = "rbxassetid://230057997",
+        SkyboxFt = "rbxassetid://230057997",
+        SkyboxLf = "rbxassetid://230057997",
+        SkyboxRt = "rbxassetid://230057997",
+        SkyboxUp = "rbxassetid://230057997"
+    },
+    Vaporwave = {
+        SkyboxBk = "rbxassetid://5053461771", -- Vaporwave aesthetic
+        SkyboxDn = "rbxassetid://5053461771",
+        SkyboxFt = "rbxassetid://5053461771",
+        SkyboxLf = "rbxassetid://5053461771",
+        SkyboxRt = "rbxassetid://5053461771",
+        SkyboxUp = "rbxassetid://5053461771"
+    },
+    Clouds = {
+        SkyboxBk = "rbxassetid://32623634", -- Cloudy skybox
+        SkyboxDn = "rbxassetid://32623634",
+        SkyboxFt = "rbxassetid://32623634",
+        SkyboxLf = "rbxassetid://32623634",
+        SkyboxRt = "rbxassetid://32623634",
+        SkyboxUp = "rbxassetid://32623634"
+    },
+    -- Additional skyboxes can be added in the same format
+}
