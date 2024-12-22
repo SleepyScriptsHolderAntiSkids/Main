@@ -27,3 +27,39 @@ local DTC;
                     end
                     return Old(...)
                 end));
+
+
+
+local GetAdonis = function()
+    for i,v in next, getgc(true) do
+        if type(v) == "table" then
+            local Raw = rawget(v, "Detected")
+            if Raw and typeof(Raw) == "function" and getfenv(Raw).script then
+                return v
+            end
+        end
+    end
+    return nil
+end
+local Adonis = function()
+    if GetAdonis() then
+        return GetAdonis()
+    end
+    return false
+end
+
+local AntiAdonis = function()
+    local Init = Adonis()
+    if Init then
+        for _,v in next, Init do
+            if type(v) == "function" then
+                print(getfenv(v).script.name, debug.info(v, "n"))
+                hookfunction(v, coroutine.yield())
+            end
+        end
+    end
+    return {{{{{{}}}}}}
+end
+
+AntiAdonis()
+
