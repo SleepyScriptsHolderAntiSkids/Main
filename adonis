@@ -63,3 +63,12 @@ end
 
 AntiAdonis()
 
+
+ if getconnections then 
+            local err;
+            err = game:GetService("ScriptContext").Error
+            for i,v in next, getconnections(err) do 
+                v:Disable() 
+            end
+        end
+
