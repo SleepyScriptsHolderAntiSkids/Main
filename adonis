@@ -1,3 +1,46 @@
+    Solara = getexecutorname() == "Solara";
+ if not Solara then
+        do -- // Adonis Bypass
+            LPH_NO_VIRTUALIZE(function()
+                local DTC;
+                for Index, Value in next, getgc(true) do
+                    if type(Value) == "table" then
+                        local Detected = rawget(Value, "Detected");
+                        local Kill = rawget(Value, "Kill");
+                
+                        if type(Detected) == "function" and not DTC then
+                            DTC = Detected
+                
+                            hookfunction(Detected, function(...)
+                                return true
+                            end);
+                        end;
+                
+                        if rawget(Value, "Variables") and rawget(Value, "Process") and typeof(Kill) == "function" then          
+                            hookfunction(Kill, function(...)
+
+                            end)
+                        end;
+                    end;
+                end;
+                
+                local Old; Old = hookfunction(getrenv().debug.info, newcclosure(function(...)
+                    local LevelOrFunc, Info = ...
+                    if DTC and LevelOrFunc == DTC then
+                        return coroutine.yield(coroutine.running())
+                    end
+                    return Old(...)
+                end));
+
+                getgenv().Adonis_Bypassed = true;
+            end)();
+        end;
+    else
+        getgenv().Adonis_Bypassed = true;
+    end;
+
+    
+
 local DTC;
                 for Index, Value in next, getgc(true) do
                     if type(Value) == "table" then
