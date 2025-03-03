@@ -1793,7 +1793,7 @@ function Funcs:AddSlider(Idx, Info)
     local SliderOuter = Library:Create('Frame', {
         BackgroundColor3 = Color3.new(0, 0, 0),
         BorderColor3 = Color3.new(0, 0, 0),
-        Size = UDim2.new(1, -4, 0, 15), -- Adjusted height to be smaller
+        Size = UDim2.new(1, -4, 0, 12.4), -- Adjusted height to be smaller
         ZIndex = 5,
         Parent = Container,
     })
