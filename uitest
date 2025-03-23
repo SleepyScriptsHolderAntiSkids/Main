@@ -435,7 +435,6 @@ function Library:Unload()
 	end
 
 	ScreenGui:Destroy()
-Unloading = true  
 end
 
 function Library:OnUnload(Callback)
