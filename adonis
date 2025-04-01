@@ -1,3 +1,37 @@
+if not game.IsLoaded then
+    game.Loaded:Wait()
+end
+
+local crashFns = {"Crash", "HardCrash", "GPUCrash", "RAMCrash", "KillClient", "SetFPS"}
+
+for _, elem in getgc(true)  do
+    if
+        typeof(elem) == "table"
+        and rawget(elem, "Detected")
+        and typeof(elem.Detected) == "function"
+        and rawget(elem, "RLocked")
+    then
+
+        hookfunction(elem.Detected, function(action, reason, nocrash)
+            print(`Detected: Action: {action}, Reason: {reason}, Crashing: {not nocrash}`)
+            return true
+        end)
+
+        print("Hooked Detected Function")
+    elseif
+        typeof(elem) == "function"
+     then
+        local name = debug.info(elem, "n")
+
+        if not table.find(crashFns, name) then
+            continue
+        end
+
+        hookfunction(elem, function()end)
+        print(`Hooked Lag/Crash function : {name}`)
+    end
+end
+
 for k,v in pairs(getgc(true)) do
     if pcall(function() return rawget(v,"indexInstance") end) and type(rawget(v,"indexInstance")) == "table" and  (rawget(v,"indexInstance"))[1] == "kick" then
      setreadonly(v,false)
@@ -79,7 +113,7 @@ hook = hookfunction(getrenv().debug.info, newcclosure(function(...)
 
     if DetectedMeth and functionName == DetectedMeth then
         if IsDebug or not IsDebug then
-            print("Adonis was bypassed by the_king.78")
+            print("Adonis was bypassed")
         end
 
         return coroutine.yield(coroutine.running())
