@@ -32,94 +32,96 @@ for _, elem in getgc(true)  do
     end
 end
 
-for k,v in pairs(getgc(true)) do
-    if pcall(function() return rawget(v,"indexInstance") end) and type(rawget(v,"indexInstance")) == "table" and  (rawget(v,"indexInstance"))[1] == "kick" then
-     setreadonly(v,false)
-        v.tvk = {"kick",function() return game.Workspace:WaitForChild("Bypaased -_-") end}
-    end
-end
-task.wait(2)
-local function isAdonisAC(table)
-return rawget(table, "Detected")
-and typeof(rawget(table, "Detected")) == "function"
-and rawget(table, "RLocked")
-end
-for _, v in next, getgc(true) do
-    if typeof(v) == "table" and isAdonisAC(v) then
-        for i, v in next, v do
-            if rawequal(i, "Detected") then
-                local old
-                old = hookfunction(v, function(action, info, nocrash)
-                    if rawequal(action, "_") and rawequal(info, "_") and rawequal(nocrash, true) then
-                        return old(action, info, nocrash)
-                    end
-                    return task.wait(9e9)
-                end)
-                break
-            end
-        end
-    end
-end
+
+
+-- for k,v in pairs(getgc(true)) do
+--     if pcall(function() return rawget(v,"indexInstance") end) and type(rawget(v,"indexInstance")) == "table" and  (rawget(v,"indexInstance"))[1] == "kick" then
+--      setreadonly(v,false)
+--         v.tvk = {"kick",function() return game.Workspace:WaitForChild("Bypaased -_-") end}
+--     end
+-- end
+-- task.wait(2)
+-- local function isAdonisAC(table)
+-- return rawget(table, "Detected")
+-- and typeof(rawget(table, "Detected")) == "function"
+-- and rawget(table, "RLocked")
+-- end
+-- for _, v in next, getgc(true) do
+--     if typeof(v) == "table" and isAdonisAC(v) then
+--         for i, v in next, v do
+--             if rawequal(i, "Detected") then
+--                 local old
+--                 old = hookfunction(v, function(action, info, nocrash)
+--                     if rawequal(action, "_") and rawequal(info, "_") and rawequal(nocrash, true) then
+--                         return old(action, info, nocrash)
+--                     end
+--                     return task.wait(9e9)
+--                 end)
+--                 break
+--             end
+--         end
+--     end
+-- end
 
 
 
-local DebugFunc = getinfo or debug.getinfo
-local IsDebug = false
-local hooks = {}
+-- local DebugFunc = getinfo or debug.getinfo
+-- local IsDebug = false
+-- local hooks = {}
 
-local DetectedMeth, KillMeth
+-- local DetectedMeth, KillMeth
 
-setthreadidentity(2)
+-- setthreadidentity(2)
 
-for index, value in getgc(true) do
-    if typeof(value) == "table" then
-        local detected = rawget(value, "Detected")
-        local kill = rawget(value, "Kill")
+-- for index, value in getgc(true) do
+--     if typeof(value) == "table" then
+--         local detected = rawget(value, "Detected")
+--         local kill = rawget(value, "Kill")
     
-        if typeof(detected) == "function" and not DetectedMeth then
-            DetectedMeth = detected
+--         if typeof(detected) == "function" and not DetectedMeth then
+--             DetectedMeth = detected
             
-            local hook
-            hook = hookfunction(DetectedMeth, function(methodName, methodFunc, methodInfo)
-                if methodName ~= "_" then
-                    if IsDebug then
-                        warn("Adonis Detected\nMethod: " .. tostring(methodName) .. "\nInfo: " .. tostring(methodFunc))
-                    end
-                end
+--             local hook
+--             hook = hookfunction(DetectedMeth, function(methodName, methodFunc, methodInfo)
+--                 if methodName ~= "_" then
+--                     if IsDebug then
+--                         warn("Adonis Detected\nMethod: " .. tostring(methodName) .. "\nInfo: " .. tostring(methodFunc))
+--                     end
+--                 end
                 
-                return true
-            end)
+--                 return true
+--             end)
 
-            table.insert(hooks, DetectedMeth)
-        end
+--             table.insert(hooks, DetectedMeth)
+--         end
 
-        if rawget(value, "Variables") and rawget(value, "Process") and typeof(kill) == "function" and not KillMeth then
-            KillMeth = kill
-            local hook
-            hook = hookfunction(KillMeth, function(killFunc)
-                if IsDebug then
-                    warn("Adonis tried to detect: " .. tostring(killFunc))
-                end
-            end)
+--         if rawget(value, "Variables") and rawget(value, "Process") and typeof(kill) == "function" and not KillMeth then
+--             KillMeth = kill
+--             local hook
+--             hook = hookfunction(KillMeth, function(killFunc)
+--                 if IsDebug then
+--                     warn("Adonis tried to detect: " .. tostring(killFunc))
+--                 end
+--             end)
 
-            table.insert(hooks, KillMeth)
-        end
-    end
-end
+--             table.insert(hooks, KillMeth)
+--         end
+--     end
+-- end
 
-local hook
-hook = hookfunction(getrenv().debug.info, newcclosure(function(...)
-    local functionName, functionDetails = ...
+-- local hook
+-- hook = hookfunction(getrenv().debug.info, newcclosure(function(...)
+--     local functionName, functionDetails = ...
 
-    if DetectedMeth and functionName == DetectedMeth then
-        if IsDebug or not IsDebug then
-            print("Adonis was bypassed")
-        end
+--     if DetectedMeth and functionName == DetectedMeth then
+--         if IsDebug or not IsDebug then
+--             print("Adonis was bypassed")
+--         end
 
-        return coroutine.yield(coroutine.running())
-    end
+--         return coroutine.yield(coroutine.running())
+--     end
     
-    return hook(...)
-end))
+--     return hook(...)
+-- end))
 
-setthreadidentity(7)
+-- setthreadidentity(7)
