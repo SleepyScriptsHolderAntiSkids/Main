@@ -13,12 +13,10 @@ for _, elem in getgc(true)  do
     then
 
         hookfunction(elem.Detected, function(action, reason, nocrash)
-            print(`Detected: Action: {action}, Reason: {reason}, Crashing: {not nocrash}`)
-            return true
+             return true
         end)
 
-        print("Hooked Detected Function")
-    elseif
+     elseif
         typeof(elem) == "function"
      then
         local name = debug.info(elem, "n")
@@ -28,8 +26,7 @@ for _, elem in getgc(true)  do
         end
 
         hookfunction(elem, function()end)
-        print(`Hooked Lag/Crash function : {name}`)
-    end
+     end
 end
 
 
