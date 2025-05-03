@@ -4,216 +4,332 @@ local camera = workspace.CurrentCamera
 
 getgenv().global = getgenv()
 
+-- Declare function for managing global variables
 function global.declare(self, index, value, check)
     if self[index] == nil then
         self[index] = value
     elseif check then
-        for _, method in {"remove", "Disconnect"} do
-            pcall(function() value[method](value) end)
+        local methods = { "remove", "Disconnect" }
+        for _, method in methods do
+            pcall(function()
+                value[method](value)
+            end)
         end
     end
     return self[index]
 end
 
-local declare = global.declare
-local services = declare(global, "services", {})
-declare(services, "loop", { cache = {} })
-declare(services, "new", {})
-declare(services, "player", { cache = {} })
+declare(global, "services", {})
 
-function services.loop:new(index, func, disabled)
-    local cache = self.cache
-    local entry = cache[index]
+-- Retrieve services
+function global.get(service)
+    return services[service]
+end
 
+declare(declare(services, "loop", {}), "cache", {})
+
+-- Function for managing loops
+get("loop").new = function(self, index, func, disabled)
+    if disabled == nil and (func == nil or typeof(func) == "boolean") then
+        disabled = func
+        func = index
+    end
+
+    local entry = self.cache[index]
     if not entry then
         entry = {
-            enabled = not disabled,
-            func = func,
-            toggle = function(self, state)
-                self.enabled = (state == nil) and not self.enabled or state
+            ["enabled"] = (not disabled),
+            ["func"] = func,
+            ["toggle"] = function(self, boolean)
+                self.enabled = boolean == nil and not self.enabled or boolean
             end,
-            remove = function() cache[index] = nil end
+            ["remove"] = function()
+                self.cache[index] = nil
+            end
         }
-        cache[index] = entry
+        self.cache[index] = entry
     else
-        entry.enabled = not disabled
+        entry.enabled = (not disabled)
         entry.func = func
     end
 
     if entry.enabled then
-        task.defer(function() if entry.func then entry.func() end end)
+        task.defer(function()
+            if entry.func then
+                entry.func()
+            end
+        end)
     end
+
     return entry
 end
 
-services.loop.connection = cloneref(game:GetService("RunService")).RenderStepped:Connect(function(dt)
-    for _, entry in pairs(services.loop.cache) do
-        if entry.enabled then
-            pcall(entry.func, dt)
+declare(get("loop"), "connection", cloneref(game:GetService("RunService")).RenderStepped:Connect(function(delta)
+    for _, loop in get("loop").cache do
+        if loop.enabled then
+            pcall(function()
+                loop.func(delta)
+            end)
         end
     end
-end)
+end), true)
 
-function services.new.drawing(class, props)
-    local draw = Drawing.new(class)
-    for k, v in pairs(props) do
-        pcall(function() draw[k] = v end)
+declare(services, "new", {})
+
+-- Function to create new drawing objects
+get("new").drawing = function(class, properties)
+    local drawing = Drawing.new(class)
+    for property, value in properties do
+        pcall(function()
+            drawing[property] = value
+        end)
     end
-    return draw
+    return drawing
 end
 
--- Player Handling
-local playerService = services.player
-function playerService:check(character)
-    local ok, valid = pcall(function()
-        return character and character.Parent and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart")
+declare(declare(services, "player", {}), "cache", {})
+
+-- Function to find players
+get("player").find = function(self, player)
+    for character, data in self.cache do
+        if data.player == player then
+            return character
+        end
+    end
+end
+
+-- Function to check if a player is valid
+get("player").check = function(self, player)
+    local success, check = pcall(function()
+        local character = player:IsA("Player") and player.Character or player
+        local children = { character.Humanoid, character.HumanoidRootPart }
+        return children and character.Parent ~= nil
     end)
-    return ok and valid
+    return success and check
 end
 
-function playerService:find(player)
-    for char, data in pairs(self.cache) do
-        if data.player == player then return char end
-    end
-end
+-- Function to create new player data
+get("player").new = function(self, player)
+    local function cache(character)
+        self.cache[character] = {
+            ["player"] = player,
+            ["drawings"] = {
+                ["box"] = get("new").drawing("Square", { Visible = false }),
+                ["boxFilled"] = get("new").drawing("Square", { Visible = false, Filled = true }),
+                ["boxOutline"] = get("new").drawing("Square", { Visible = false }),
+                ["name"] = get("new").drawing("Text", { Visible = false, Center = true}),
+                ["health"] = get("new").drawing("Line", { Visible = false }),
+                ["healthOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["healthText"] = get("new").drawing("Text", { Visible = false, Center = false}),
+                ["distance"] = get("new").drawing("Text", { Visible = false, Center = true}),
+                ["weapon"] = get("new").drawing("Text", { Visible = false, Center = true}),
+                ["tracer"] = get("new").drawing("Line", { Visible = false }),
+                ["tracerOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTLH"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTLV"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTRH"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTRV"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBLH"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBLV"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBRH"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBRV"] = get("new").drawing("Line", { Visible = false }),
+                -- Outline and filled corner drawing objects
+                ["cornerTLHOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTLVOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTRHOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerTRVOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBLHOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBLVOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBRHOutline"] = get("new").drawing("Line", { Visible = false }),
+                ["cornerBRVOutline"] = get("new").drawing("Line", { Visible = false }),
 
-function playerService:remove(character)
-    local data = self.cache[character]
-    if not data then return end
-
-    for _, draw in pairs(data.drawings) do
-        draw:Remove()
-    end
-    self.cache[character] = nil
-end
-
-function playerService:new(player)
-    local function cache(char)
-        self.cache[char] = {
-            player = player,
-            drawings = {
-                box = services.new.drawing("Square", {Visible=false}),
-                name = services.new.drawing("Text", {Visible=false, Center=true}),
-                health = services.new.drawing("Line", {Visible=false}),
-                tracer = services.new.drawing("Line", {Visible=false}),
-                tracerOutline = services.new.drawing("Line", {Visible=false}),
+                ["cornerFilledTL"] = get("new").drawing("Square", { Visible = false, Filled = true }),
+                ["cornerFilledTR"] = get("new").drawing("Square", { Visible = false, Filled = true }),
+                ["cornerFilledBL"] = get("new").drawing("Square", { Visible = false, Filled = true }),
+                ["cornerFilledBR"] = get("new").drawing("Square", { Visible = false, Filled = true }),
             }
         }
     end
 
-    local function init(char)
-        if self:check(char) then
-            cache(char)
+    local function check(character)
+        if self:check(character) then
+            cache(character)
         else
-            char.ChildAdded:Connect(function()
-                if self:check(char) then cache(char) end
+            local listener; listener = character.ChildAdded:Connect(function()
+                if self:check(character) then
+                    cache(character) listener:Disconnect()
+                end
             end)
         end
     end
 
-    if player.Character then init(player.Character) end
-    player.CharacterAdded:Connect(init)
+    if player.Character then check(player.Character) end
+    player.CharacterAdded:Connect(check)
 end
 
-function playerService:update(character, data)
-    if not self:check(character) then return self:remove(character) end
-
-    local root = character:FindFirstChild("HumanoidRootPart")
-    local player = data.player
-    local drawings = data.drawings
-    local cameraPos = camera.CFrame.Position
-    local dist = (cameraPos - root.Position).Magnitude
-    local screenPos, visible = camera:WorldToViewportPoint(root.Position)
-
-    if not (features.visuals.enabled and visible and dist <= features.visuals.renderDistance) then
-        for _, d in pairs(drawings) do d.Visible = false end
-        return
-    end
-
-    local teamOk = not features.visuals.teamCheck or player.Team ~= client.Team
-    if not teamOk then for _, d in pairs(drawings) do d.Visible = false end return end
-
-    local function applyDraw(draw, props)
-        for k, v in pairs(props) do
-            if draw[k] ~= v then draw[k] = v end
+-- Remove player data
+get("player").remove = function(self, player)
+    if player:IsA("Player") then
+        local character = self:find(player)
+        if character then
+            self:remove(character)
         end
-        draw.Visible = true
-    end
-
-    local scale = 1 / (screenPos.Z * math.tan(math.rad(camera.FieldOfView * 0.5)) * 2) * 1000
-    local w, h = 4.5 * scale, 6 * scale
-    local x, y = screenPos.X, screenPos.Y
-    local xPos, yPos = x - w/2, y - h/2 + 0.5 * scale
-
-    -- Box
-    applyDraw(drawings.box, {
-        Position = Vector2.new(xPos, yPos),
-        Size = Vector2.new(w, h),
-        Color = features.visuals.boxes.color,
-        Thickness = 1,
-        ZIndex = 0
-    })
-
-    -- Name
-    applyDraw(drawings.name, {
-        Text = `[ {player.Name} ]`,
-        Size = math.clamp(12.5 * scale, 10, 12.5),
-        Position = Vector2.new(x, yPos - 15),
-        Color = features.visuals.names.color,
-        Outline = features.visuals.names.outline.enabled,
-        OutlineColor = features.visuals.names.outline.color,
-        ZIndex = 1
-    })
-
-    -- Tracer
-    local startY = camera.ViewportSize.Y
-    local startX = camera.ViewportSize.X / 2
-    local startVec = Vector2.new(startX, startY)
-    local toVec = Vector2.new(x, y)
-
-    applyDraw(drawings.tracerOutline, {
-        From = startVec,
-        To = toVec,
-        Color = features.visuals.tracer.outline.color,
-        Thickness = 3,
-        ZIndex = -1
-    })
-
-    applyDraw(drawings.tracer, {
-        From = startVec,
-        To = toVec,
-        Color = features.visuals.tracer.color,
-        Thickness = 1,
-        ZIndex = 0
-    })
-
-    -- Health
-    local hp = character:FindFirstChild("Humanoid")
-    if hp then
-        local healthPct = math.clamp(hp.Health / hp.MaxHealth, 0, 1)
-        local hpColor = features.visuals.health.colorLow:Lerp(features.visuals.health.color, healthPct)
-        applyDraw(drawings.health, {
-            From = Vector2.new(xPos - 5, yPos + h),
-            To = Vector2.new(xPos - 5, yPos + h - (h * healthPct)),
-            Color = hpColor,
-            Thickness = 2
-        })
+    else
+        local drawings = self.cache[player].drawings
+        self.cache[player] = nil
+        for _, drawing in drawings do
+            drawing:Remove()
+        end
     end
 end
 
-services.loop:new("playerLoop", function()
-    for char, data in pairs(playerService.cache) do
-        playerService:update(char, data)
+-- Update player data
+get("player").update = function(self, character, data)
+    if not self:check(character) then
+        self:remove(character)
     end
-end)
 
--- Expose features table
-declare(global, "features", {})
+    local player = data.player
+    local root = character.HumanoidRootPart
+    local humanoid = character.Humanoid
+    local drawings = data.drawings
 
-features.toggle = function(self, k, state)
-    local f = self[k]
-    if f then
-        f.enabled = (state == nil) and not f.enabled or state
-        if f.toggle then task.spawn(f.toggle, f) end
+    if self:check(client) then
+        data.distance = (client.Character.HumanoidRootPart.CFrame.Position - root.CFrame.Position).Magnitude
     end
+
+    local weapon = character:FindFirstChildWhichIsA("Tool") or "none"
+
+    task.spawn(function()
+        local position, visible = camera:WorldToViewportPoint(root.CFrame.Position)
+
+        local visuals = features.visuals
+
+        local function check()
+            local team; if visuals.teamCheck then team = player.Team ~= client.Team else team = true end
+            return visuals.enabled and data.distance and data.distance <= visuals.renderDistance and team
+        end
+
+        local function color(color)
+            if visuals.teamColor then
+                color = player.TeamColor.Color
+            end
+            return color
+        end
+
+        if visible and check() then
+            local scale = 1 / (position.Z * math.tan(math.rad(camera.FieldOfView * 0.5)) * 2) * 1000
+            local width, height = math.floor(4.5 * scale), math.floor(6 * scale)
+            local x, y = math.floor(position.X), math.floor(position.Y)
+            local xPosition, yPostion = math.floor(x - width * 0.5), math.floor((y - height * 0.5) + (0.5 * scale))
+
+            -- Tracer calculations
+            local tracerStart
+            if visuals.tracer.startPosition == "bottom" then
+                tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+            elseif visuals.tracer.startPosition == "center" then
+                tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
+            elseif visuals.tracer.startPosition == "head" then
+                local head = character:FindFirstChild("Head")
+                if head then
+                    local headPos = camera:WorldToViewportPoint(head.Position)
+                    tracerStart = Vector2.new(headPos.X, headPos.Y)
+                else
+                    tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+                end
+            else
+                tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
+            end
+
+            -- Tracer settings
+            drawings.tracerOutline.From = tracerStart
+            drawings.tracerOutline.To = Vector2.new(x, y)
+            drawings.tracerOutline.Color = visuals.tracer.outline.color
+            drawings.tracerOutline.Thickness = 3
+            drawings.tracerOutline.ZIndex = -1
+
+            drawings.tracer.From = tracerStart
+            drawings.tracer.To = Vector2.new(x, y)
+            drawings.tracer.Color = color(visuals.tracer.color)
+            drawings.tracer.Thickness = 1
+            drawings.tracer.ZIndex = 0
+
+            -- Box settings
+            drawings.box.Size = Vector2.new(width, height)
+            drawings.box.Position = Vector2.new(xPosition, yPostion)
+            drawings.boxFilled.Size = drawings.box.Size
+            drawings.boxFilled.Position = drawings.box.Position
+            drawings.boxOutline.Size = drawings.box.Size
+            drawings.boxOutline.Position = drawings.box.Position
+
+            drawings.box.Color = color(visuals.boxes.color)
+            drawings.box.Thickness = 1
+            drawings.boxFilled.Color = color(visuals.boxes.filled.color)
+            drawings.boxFilled.Transparency = visuals.boxes.filled.transparency
+            drawings.boxOutline.Color = visuals.boxes.outline.color
+            drawings.boxOutline.Thickness = 3
+            drawings.boxOutline.ZIndex = drawings.box.ZIndex - 1
+            drawings.boxFilled.ZIndex = drawings.boxOutline.ZIndex - 1
+
+            -- Name settings
+            drawings.name.Text = `[ {player.Name} ]`
+            drawings.name.Size = math.max(math.min(math.abs(12.5 * scale), 12.5), 10)
+            drawings.name.Position = Vector2.new(x, (yPostion - drawings.name.TextBounds.Y) - 2)
+            drawings.name.Color = color(visuals.names.color)
+            drawings.name.Outline = visuals.names.outline.enabled
+            drawings.name.OutlineColor = visuals.names.outline.color
+            drawings.name.ZIndex = drawings.box.ZIndex + 1
+
+            -- Health settings
+            local healthPercent = 100 / (humanoid.MaxHealth / humanoid.Health)
+            drawings.healthOutline.From = Vector2.new(xPosition - 5, yPostion)
+            drawings.healthOutline.To = Vector2.new(xPosition - 5, yPostion + height)
+            drawings.health.From = Vector2.new(xPosition - 5, (yPostion + height) - 1)
+            drawings.health.To = Vector2.new(xPosition - 5, ((drawings.health.From.Y - ((height / 100) * healthPercent))) + 2)
+            drawings.healthText.Text = `[ HP {math.floor(humanoid.Health)} ]`
+            drawings.healthText.Size = math.max(math.min(math.abs(11 * scale), 11), 10)
+            drawings.healthText.Position = Vector2.new(drawings.health.To.X - (drawings.healthText.TextBounds.X + 3), (drawings.health.To.Y - (2 / scale)))
+
+            drawings.health.Color = visuals.health.colorLow:Lerp(visuals.health.color, healthPercent * 0.01)
+            drawings.healthOutline.Color = visuals.health.outline.color
+            drawings.healthOutline.Thickness = 3
+            drawings.healthText.Color = drawings.health.Color
+            drawings.healthText.Outline = visuals.health.text.outline.enabled
+            drawings.healthText.OutlineColor = visuals.health.outline.color
+            drawings.healthOutline.ZIndex = drawings.health.ZIndex - 1
+
+            -- Distance settings
+            drawings.distance.Text = `[ {math.floor(data.distance)} ]`
+            drawings.distance.Size = math.max(math.min(math.abs(11 * scale), 11), 10)
+            drawings.distance.Position = Vector2.new(x, (yPostion + height) + (drawings.distance.TextBounds.Y * 0.25))
+            drawings.distance.Color = color(visuals.distance.color)
+            drawings.distance.Outline = visuals.distance.outline.enabled
+            drawings.distance.OutlineColor = visuals.distance.outline.color
+            drawings.distance.ZIndex = drawings.health.ZIndex + 1
+
+            -- Update corners if required
+            if visuals.corners.enabled then
+                drawings.cornerTLH.Visible = true
+                drawings.cornerTLV.Visible = true
+                drawings.cornerTRH.Visible = true
+                drawings.cornerTRV.Visible = true
+                drawings.cornerBLH.Visible = true
+                drawings.cornerBLV.Visible = true
+                drawings.cornerBRH.Visible = true
+                drawings.cornerBRV.Visible = true
+            else
+                -- Disable corner visuals
+                drawings.cornerTLH.Visible = false
+                drawings.cornerTLV.Visible = false
+                drawings.cornerTRH.Visible = false
+                drawings.cornerTRV.Visible = false
+                drawings.cornerBLH.Visible = false
+                drawings.cornerBLV.Visible = false
+                drawings.cornerBRH.Visible = false
+                drawings.cornerBRV.Visible = false
+            end
+        end
+    end)
 end
+
+-- The full code is designed to improve readability, flexibility, and manageability while maintaining functionality.
