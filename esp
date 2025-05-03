@@ -5,448 +5,215 @@ local camera = workspace.CurrentCamera
 getgenv().global = getgenv()
 
 function global.declare(self, index, value, check)
-	if self[index] == nil then
-		self[index] = value
-	elseif check then
-		local methods = { "remove", "Disconnect" }
-
-		for _, method in methods do
-			pcall(function()
-				value[method](value)
-			end)
-		end
-	end
-
-	return self[index]
-end
-
-declare(global, "services", {})
-
-function global.get(service)
-	return services[service]
-end
-
-declare(declare(services, "loop", {}), "cache", {})
-
-get("loop").new = function(self, index, func, disabled)
-    if disabled == nil and (func == nil or typeof(func) == "boolean") then
-        disabled = func
-        func = index
+    if self[index] == nil then
+        self[index] = value
+    elseif check then
+        for _, method in {"remove", "Disconnect"} do
+            pcall(function() value[method](value) end)
+        end
     end
+    return self[index]
+end
 
-    local entry = self.cache[index]
+local declare = global.declare
+local services = declare(global, "services", {})
+declare(services, "loop", { cache = {} })
+declare(services, "new", {})
+declare(services, "player", { cache = {} })
+
+function services.loop:new(index, func, disabled)
+    local cache = self.cache
+    local entry = cache[index]
+
     if not entry then
         entry = {
-            ["enabled"] = (not disabled),
-            ["func"] = func,
-            ["toggle"] = function(self, boolean)
-                if boolean == nil then
-                    self.enabled = not self.enabled
-                else
-                    self.enabled = boolean
-                end
+            enabled = not disabled,
+            func = func,
+            toggle = function(self, state)
+                self.enabled = (state == nil) and not self.enabled or state
             end,
-            ["remove"] = function()
-                self.cache[index] = nil
-            end
+            remove = function() cache[index] = nil end
         }
-        self.cache[index] = entry
+        cache[index] = entry
     else
-        entry.enabled = (not disabled)
+        entry.enabled = not disabled
         entry.func = func
     end
 
     if entry.enabled then
-        task.defer(function()
-            if entry.func then
-                entry.func()
-            end
-        end)
+        task.defer(function() if entry.func then entry.func() end end)
     end
-
     return entry
 end
 
+services.loop.connection = cloneref(game:GetService("RunService")).RenderStepped:Connect(function(dt)
+    for _, entry in pairs(services.loop.cache) do
+        if entry.enabled then
+            pcall(entry.func, dt)
+        end
+    end
+end)
 
-declare(get("loop"), "connection", cloneref(game:GetService("RunService")).RenderStepped:Connect(function(delta)
-	for _, loop in get("loop").cache do
-		if loop.enabled then
-			local success, result = pcall(function()
-				loop.func(delta)
-			end)
-
-			if not success then
-			end
-		end
-	end
-end), true)
-
-declare(services, "new", {})
-
-get("new").drawing = function(class, properties)
-	local drawing = Drawing.new(class)
-	for property, value in properties do
-		pcall(function()
-			drawing[property] = value
-		end)
-	end
-	return drawing
+function services.new.drawing(class, props)
+    local draw = Drawing.new(class)
+    for k, v in pairs(props) do
+        pcall(function() draw[k] = v end)
+    end
+    return draw
 end
 
-declare(declare(services, "player", {}), "cache", {})
-
-get("player").find = function(self, player)
-	for character, data in self.cache do
-		if data.player == player then
-			return character
-		end
-	end
+-- Player Handling
+local playerService = services.player
+function playerService:check(character)
+    local ok, valid = pcall(function()
+        return character and character.Parent and character:FindFirstChild("Humanoid") and character:FindFirstChild("HumanoidRootPart")
+    end)
+    return ok and valid
 end
 
-get("player").check = function(self, player)
-	local success, check = pcall(function()
-		local character = player:IsA("Player") and player.Character or player
-		local children = { character.Humanoid, character.HumanoidRootPart }
-
-		return children and character.Parent ~= nil
-	end)
-
-	return success and check
+function playerService:find(player)
+    for char, data in pairs(self.cache) do
+        if data.player == player then return char end
+    end
 end
 
-get("player").new = function(self, player)
-	local function cache(character)
-		self.cache[character] = {
-			["player"] = player,
-			["drawings"] = {
-				["box"] = get("new").drawing("Square", { Visible = false }),
-				["boxFilled"] = get("new").drawing("Square", { Visible = false, Filled = true }),
-				["boxOutline"] = get("new").drawing("Square", { Visible = false }),
-				["name"] = get("new").drawing("Text", { Visible = false, Center = true}),
-				["health"] = get("new").drawing("Line", { Visible = false }),
-				["healthOutline"] = get("new").drawing("Line", { Visible = false }),
-				["healthText"] = get("new").drawing("Text", { Visible = false, Center = false}),
-				["distance"] = get("new").drawing("Text", { Visible = false, Center = true}),
-				["weapon"] = get("new").drawing("Text", { Visible = false, Center = true}),
-				["tracer"] = get("new").drawing("Line", { Visible = false }),
-				["tracerOutline"] = get("new").drawing("Line", { Visible = false }),
-				["cornerTLH"] = get("new").drawing("Line", { Visible = false }),
-				["cornerTLV"] = get("new").drawing("Line", { Visible = false }),
-				["cornerTRH"] = get("new").drawing("Line", { Visible = false }),
-				["cornerTRV"] = get("new").drawing("Line", { Visible = false }),
-				["cornerBLH"] = get("new").drawing("Line", { Visible = false }),
-				["cornerBLV"] = get("new").drawing("Line", { Visible = false }),
-				["cornerBRH"] = get("new").drawing("Line", { Visible = false }),
-				["cornerBRV"] = get("new").drawing("Line", { Visible = false }),
-                                 ["cornerTLHOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerTLVOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerTRHOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerTRVOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerBLHOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerBLVOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerBRHOutline"] = get("new").drawing("Line", { Visible = false }),
-				    ["cornerBRVOutline"] = get("new").drawing("Line", { Visible = false }),
+function playerService:remove(character)
+    local data = self.cache[character]
+    if not data then return end
 
-			    ["cornerFilledTL"] = get("new").drawing("Square", { Visible = false, Filled = true }),
-			    ["cornerFilledTR"] = get("new").drawing("Square", { Visible = false, Filled = true }),
-			    ["cornerFilledBL"] = get("new").drawing("Square", { Visible = false, Filled = true }),
-			    ["cornerFilledBR"] = get("new").drawing("Square", { Visible = false, Filled = true }),
-			}
-		}
-	end
-
-	local function check(character)
-		if self:check(character) then
-			cache(character)
-		else
-			local listener; listener = character.ChildAdded:Connect(function()
-				if self:check(character) then
-					cache(character) listener:Disconnect()
-				end
-			end)
-		end
-	end
-
-	if player.Character then check(player.Character) end
-	player.CharacterAdded:Connect(check)
+    for _, draw in pairs(data.drawings) do
+        draw:Remove()
+    end
+    self.cache[character] = nil
 end
 
-get("player").remove = function(self, player)
-	if player:IsA("Player") then
-		local character = self:find(player)
-		if character then
-			self:remove(character)
-		end
-	else
-		local drawings = self.cache[player].drawings self.cache[player] = nil
+function playerService:new(player)
+    local function cache(char)
+        self.cache[char] = {
+            player = player,
+            drawings = {
+                box = services.new.drawing("Square", {Visible=false}),
+                name = services.new.drawing("Text", {Visible=false, Center=true}),
+                health = services.new.drawing("Line", {Visible=false}),
+                tracer = services.new.drawing("Line", {Visible=false}),
+                tracerOutline = services.new.drawing("Line", {Visible=false}),
+            }
+        }
+    end
 
-		for _, drawing in drawings do
-			drawing:Remove()
-		end
-	end
+    local function init(char)
+        if self:check(char) then
+            cache(char)
+        else
+            char.ChildAdded:Connect(function()
+                if self:check(char) then cache(char) end
+            end)
+        end
+    end
+
+    if player.Character then init(player.Character) end
+    player.CharacterAdded:Connect(init)
 end
 
-get("player").update = function(self, character, data)
-	if not self:check(character) then
-		self:remove(character)
-	end
+function playerService:update(character, data)
+    if not self:check(character) then return self:remove(character) end
 
-	local player = data.player
-	local root = character.HumanoidRootPart
-	local humanoid = character.Humanoid
-	local drawings = data.drawings
+    local root = character:FindFirstChild("HumanoidRootPart")
+    local player = data.player
+    local drawings = data.drawings
+    local cameraPos = camera.CFrame.Position
+    local dist = (cameraPos - root.Position).Magnitude
+    local screenPos, visible = camera:WorldToViewportPoint(root.Position)
 
-	if self:check(client) then
-		data.distance = (client.Character.HumanoidRootPart.CFrame.Position - root.CFrame.Position).Magnitude
-	end
+    if not (features.visuals.enabled and visible and dist <= features.visuals.renderDistance) then
+        for _, d in pairs(drawings) do d.Visible = false end
+        return
+    end
 
-	local weapon = character:FindFirstChildWhichIsA("Tool") or "none"
+    local teamOk = not features.visuals.teamCheck or player.Team ~= client.Team
+    if not teamOk then for _, d in pairs(drawings) do d.Visible = false end return end
 
-	task.spawn(function()
-		local position, visible = camera:WorldToViewportPoint(root.CFrame.Position)
+    local function applyDraw(draw, props)
+        for k, v in pairs(props) do
+            if draw[k] ~= v then draw[k] = v end
+        end
+        draw.Visible = true
+    end
 
-		local visuals = features.visuals
+    local scale = 1 / (screenPos.Z * math.tan(math.rad(camera.FieldOfView * 0.5)) * 2) * 1000
+    local w, h = 4.5 * scale, 6 * scale
+    local x, y = screenPos.X, screenPos.Y
+    local xPos, yPos = x - w/2, y - h/2 + 0.5 * scale
 
-		local function check()
-			local team; if visuals.teamCheck then team = player.Team ~= client.Team else team = true end
-			return visuals.enabled and data.distance and data.distance <= visuals.renderDistance and team
-		end
+    -- Box
+    applyDraw(drawings.box, {
+        Position = Vector2.new(xPos, yPos),
+        Size = Vector2.new(w, h),
+        Color = features.visuals.boxes.color,
+        Thickness = 1,
+        ZIndex = 0
+    })
 
-		local function color(color)
-			if visuals.teamColor then
-				color = player.TeamColor.Color
-			end
-			return color
-		end
+    -- Name
+    applyDraw(drawings.name, {
+        Text = `[ {player.Name} ]`,
+        Size = math.clamp(12.5 * scale, 10, 12.5),
+        Position = Vector2.new(x, yPos - 15),
+        Color = features.visuals.names.color,
+        Outline = features.visuals.names.outline.enabled,
+        OutlineColor = features.visuals.names.outline.color,
+        ZIndex = 1
+    })
 
-		if visible and check() then
-			local scale = 1 / (position.Z * math.tan(math.rad(camera.FieldOfView * 0.5)) * 2) * 1000
-			local width, height = math.floor(4.5 * scale), math.floor(6 * scale)
-			local x, y = math.floor(position.X), math.floor(position.Y)
-			local xPosition, yPostion = math.floor(x - width * 0.5), math.floor((y - height * 0.5) + (0.5 * scale))
-            
-			-- Tracer calculations
-			local tracerStart
-			if visuals.tracer.startPosition == "bottom" then
-				tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-			elseif visuals.tracer.startPosition == "center" then
-				tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)
-			elseif visuals.tracer.startPosition == "head" then
-				local head = character:FindFirstChild("Head")
-				if head then
-					local headPos = camera:WorldToViewportPoint(head.Position)
-					tracerStart = Vector2.new(headPos.X, headPos.Y)
-				else
-					tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-				end
-			else
-				tracerStart = Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y)
-			end
+    -- Tracer
+    local startY = camera.ViewportSize.Y
+    local startX = camera.ViewportSize.X / 2
+    local startVec = Vector2.new(startX, startY)
+    local toVec = Vector2.new(x, y)
 
-			-- Tracer settings
-			drawings.tracerOutline.From = tracerStart
-			drawings.tracerOutline.To = Vector2.new(x, y)
-			drawings.tracerOutline.Color = visuals.tracer.outline.color
-			drawings.tracerOutline.Thickness = 3
-			drawings.tracerOutline.ZIndex = -1
+    applyDraw(drawings.tracerOutline, {
+        From = startVec,
+        To = toVec,
+        Color = features.visuals.tracer.outline.color,
+        Thickness = 3,
+        ZIndex = -1
+    })
 
-			drawings.tracer.From = tracerStart
-			drawings.tracer.To = Vector2.new(x, y)
-			drawings.tracer.Color = color(visuals.tracer.color)
-			drawings.tracer.Thickness = 1
-			drawings.tracer.ZIndex = 0
+    applyDraw(drawings.tracer, {
+        From = startVec,
+        To = toVec,
+        Color = features.visuals.tracer.color,
+        Thickness = 1,
+        ZIndex = 0
+    })
 
-
-				drawings.box.Size = Vector2.new(width, height)
-				drawings.box.Position = Vector2.new(xPosition, yPostion)
-				drawings.boxFilled.Size = drawings.box.Size
-				drawings.boxFilled.Position = drawings.box.Position
-				drawings.boxOutline.Size = drawings.box.Size
-				drawings.boxOutline.Position = drawings.box.Position
-
-				drawings.box.Color = color(visuals.boxes.color)
-				drawings.box.Thickness = 1
-				drawings.boxFilled.Color = color(visuals.boxes.filled.color)
-				drawings.boxFilled.Transparency = visuals.boxes.filled.transparency
-				drawings.boxOutline.Color = visuals.boxes.outline.color
-				drawings.boxOutline.Thickness = 3
-
-				drawings.boxOutline.ZIndex = drawings.box.ZIndex - 1
-				drawings.boxFilled.ZIndex = drawings.boxOutline.ZIndex - 1
-		
-
-			-- Name settings
-			drawings.name.Text = `[ {player.Name} ]`
-			drawings.name.Size = math.max(math.min(math.abs(12.5 * scale), 12.5), 10)
-			drawings.name.Position = Vector2.new(x, (yPostion - drawings.name.TextBounds.Y) - 2)
-			drawings.name.Color = color(visuals.names.color)
-			drawings.name.Outline = visuals.names.outline.enabled
-			drawings.name.OutlineColor = visuals.names.outline.color
-			drawings.name.ZIndex = drawings.box.ZIndex + 1
-
-			-- Health settings
-			local healthPercent = 100 / (humanoid.MaxHealth / humanoid.Health)
-			drawings.healthOutline.From = Vector2.new(xPosition - 5, yPostion)
-			drawings.healthOutline.To = Vector2.new(xPosition - 5, yPostion + height)
-			drawings.health.From = Vector2.new(xPosition - 5, (yPostion + height) - 1)
-			drawings.health.To = Vector2.new(xPosition - 5, ((drawings.health.From.Y - ((height / 100) * healthPercent))) + 2)
-			drawings.healthText.Text = `[ HP {math.floor(humanoid.Health)} ]`
-			drawings.healthText.Size = math.max(math.min(math.abs(11 * scale), 11), 10)
-			drawings.healthText.Position = Vector2.new(drawings.health.To.X - (drawings.healthText.TextBounds.X + 3), (drawings.health.To.Y - (2 / scale)))
-
-			drawings.health.Color = visuals.health.colorLow:Lerp(visuals.health.color, healthPercent * 0.01)
-			drawings.healthOutline.Color = visuals.health.outline.color
-			drawings.healthOutline.Thickness = 3
-			drawings.healthText.Color = drawings.health.Color
-			drawings.healthText.Outline = visuals.health.text.outline.enabled
-			drawings.healthText.OutlineColor = visuals.health.outline.color
-			drawings.healthOutline.ZIndex = drawings.health.ZIndex - 1
-
-			-- Distance settings
-			drawings.distance.Text = `[ {math.floor(data.distance)} ]`
-			drawings.distance.Size = math.max(math.min(math.abs(11 * scale), 11), 10)
-			drawings.distance.Position = Vector2.new(x, (yPostion + height) + (drawings.distance.TextBounds.Y * 0.25))
-			drawings.distance.Color = color(visuals.distance.color)
-			drawings.distance.Outline = visuals.distance.outline.enabled
-			drawings.distance.OutlineColor = visuals.distance.outline.color
-			
-			-- Weapon settings
-			drawings.weapon.Text = `[ {weapon} ]`
-			drawings.weapon.Size = math.max(math.min(math.abs(11 * scale), 11), 10)
-			drawings.weapon.Position = visuals.distance.enabled and Vector2.new(drawings.distance.Position.x, drawings.distance.Position.Y + (drawings.weapon.TextBounds.Y * 0.75)) or drawings.distance.Position
-			drawings.weapon.Color = color(visuals.weapon.color)
-			drawings.weapon.Outline = visuals.weapon.outline.enabled
-			drawings.weapon.OutlineColor = visuals.weapon.outline.color
-		end
-
-		-- Visibility toggles
-		local isBoxStyle = visuals.boxes.style == "Box"
-		local isCornerStyle = visuals.boxes.style == "Corners"
-
-		drawings.box.Visible = (check() and visible and visuals.boxes.enabled and isBoxStyle)
-		drawings.boxFilled.Visible = (check() and drawings.box.Visible and visuals.boxes.filled.enabled and isBoxStyle)
-		drawings.boxOutline.Visible = (check() and drawings.box.Visible and visuals.boxes.outline.enabled and isBoxStyle)
-
-
-for _, corner in {"cornerTLH", "cornerTLV", "cornerTRH", "cornerTRV", "cornerBLH", "cornerBLV", "cornerBRH", "cornerBRV"} do
-    drawings[corner].Visible = (check() and visible and visuals.boxes.enabled and visuals.boxes.style == "Corners")
+    -- Health
+    local hp = character:FindFirstChild("Humanoid")
+    if hp then
+        local healthPct = math.clamp(hp.Health / hp.MaxHealth, 0, 1)
+        local hpColor = features.visuals.health.colorLow:Lerp(features.visuals.health.color, healthPct)
+        applyDraw(drawings.health, {
+            From = Vector2.new(xPos - 5, yPos + h),
+            To = Vector2.new(xPos - 5, yPos + h - (h * healthPct)),
+            Color = hpColor,
+            Thickness = 2
+        })
+    end
 end
 
-		drawings.name.Visible = (check() and visible and visuals.names.enabled)
-		drawings.health.Visible = (check() and visible and visuals.health.enabled)
-		drawings.healthOutline.Visible = (check() and drawings.health.Visible and visuals.health.outline.enabled)
-		drawings.healthText.Visible = (check() and drawings.health.Visible and visuals.health.text.enabled)
-		drawings.distance.Visible = (check() and visible and visuals.distance.enabled)
-				drawings.weapon.Visible = (check() and visible and visuals.weapon.enabled)
-		drawings.tracer.Visible = (check() and visible and visuals.tracer.enabled)
-		drawings.tracerOutline.Visible = (check() and drawings.tracer.Visible and visuals.tracer.outline.enabled)
-	end)
-end
+services.loop:new("playerLoop", function()
+    for char, data in pairs(playerService.cache) do
+        playerService:update(char, data)
+    end
+end)
 
-declare(get("player"), "loop", get("loop"):new(function ()
-	for character, data in get("player").cache do
-		get("player"):update(character, data)
-	end
-end), true)
-
+-- Expose features table
 declare(global, "features", {})
 
-features.toggle = function(self, feature, boolean)
-	if self[feature] then
-		if boolean == nil then
-			self[feature].enabled = not self[feature].enabled
-		else
-			self[feature].enabled = boolean
-		end
-
-		if self[feature].toggle then
-			task.spawn(function()
-				self[feature]:toggle()
-			end)
-		end
-	end
+features.toggle = function(self, k, state)
+    local f = self[k]
+    if f then
+        f.enabled = (state == nil) and not f.enabled or state
+        if f.toggle then task.spawn(f.toggle, f) end
+    end
 end
-
-declare(features, "visuals", {
-	["enabled"] = false,
-	["teamCheck"] = false,
-	["teamColor"] = true,
-	["renderDistance"] = 2000,
-
-	["boxes"] = {
-		["enabled"] = true,
-		["style"] = "Box", -- "Box" or "Corners"
-		["color"] = Color3.fromRGB(255, 255, 255),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0),
-		},
-		["filled"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(255, 255, 255),
-			["transparency"] = 0.25
-		},
-	},
-	["names"] = {
-		["enabled"] = true,
-		["color"] = Color3.fromRGB(255, 255, 255),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0),
-		},
-	},
-	["health"] = {
-		["enabled"] = true,
-		["color"] = Color3.fromRGB(0, 255, 0),
-		["colorLow"] = Color3.fromRGB(255, 0, 0),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0)
-		},
-		["text"] = {
-			["enabled"] = true,
-			["outline"] = {
-				["enabled"] = true,
-			},
-		}
-	},
-	["distance"] = {
-		["enabled"] = true,
-		["color"] = Color3.fromRGB(255, 255, 255),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0),
-		},
-	},
-	["weapon"] = {
-		["enabled"] = true,
-		["color"] = Color3.fromRGB(255, 255, 255),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0),
-		},
-	},
-	["tracer"] = {
-		["enabled"] = false,
-		["startPosition"] = "bottom", -- "bottom", "center", or "head"
-		["color"] = Color3.fromRGB(255, 255, 255),
-		["outline"] = {
-			["enabled"] = true,
-			["color"] = Color3.fromRGB(0, 0, 0),
-		},
-	}
-})
-
-for _, player in players:GetPlayers() do
-	if player ~= client and not get("player"):find(player) then
-		get("player"):new(player)
-	end
-end
-
-declare(get("player"), "added", players.PlayerAdded:Connect(function(player)
-	get("player"):new(player)
-end), true)
-
-declare(get("player"), "removing", players.PlayerRemoving:Connect(function(player)
-	get("player"):remove(player)
-end), true)
