@@ -1,0 +1,1 @@
+getgenv().notifymessage = "Status: 🟢 - Undetected (Safe to use)"
