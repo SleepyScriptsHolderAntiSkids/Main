@@ -2765,20 +2765,48 @@ function Library:CreateWindow(...)
 		Tabs = {};
 	};
 
-	local Outer = Library:Create('Frame', {
-		AnchorPoint = Config.AnchorPoint,
-		BackgroundColor3 = Color3.new(0, 0, 0);
-		BorderSizePixel = 0;
-		Position = Config.Position,
-		Size = Config.Size,
-		Visible = false;
-		ZIndex = 1;
-		Parent = ScreenGui;
-	});
 
-	Library:MakeDraggable(Outer, 25);
 
-	local Inner = Library:Create('Frame', {
+
+
+
+
+
+
+
+
+
+
+
+-- Glow background image (behind Outer)
+local GlowBackground = Library:Create('ImageLabel', {
+	Image = "rbxassetid://2592362371",
+	ImageColor3 = Library.AccentColor,
+	ImageTransparency = 0.9,
+	ScaleType = Enum.ScaleType.Slice,
+	SliceCenter = Rect.new(20, 20, 280, 280),
+	Size = Config.Size + UDim2.fromOffset(40, 40),
+	Position = Config.Position + UDim2.fromOffset(-20, -20),
+	AnchorPoint = Config.AnchorPoint,
+	BackgroundTransparency = 1,
+	ZIndex = 0,
+	Parent = ScreenGui
+})
+
+local Outer = Library:Create('Frame', {
+	AnchorPoint = Config.AnchorPoint,
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BorderSizePixel = 0,
+	Position = Config.Position,
+	Size = Config.Size,
+	Visible = false,
+	ZIndex = 1,
+	Parent = ScreenGui
+})
+
+Library:MakeDraggable(Outer, 25)
+
+local Inner = Library:Create('Frame', {
 	BackgroundColor3 = Library.MainColor,
 	BorderSizePixel = 0,
 	Position = UDim2.new(0, 1, 0, 1),
@@ -2786,38 +2814,53 @@ function Library:CreateWindow(...)
 	ZIndex = 1,
 	Parent = Outer
 })
-	
-	Library:Create('UICorner', {
-		CornerRadius = UDim.new(0, 6),
-		Parent = Inner
-	})
-	
-	local Stroke = Library:Create('UIStroke', {
-		Color = Library.AccentColor,
-		Thickness = 2,
-		Transparency = 0.2,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Parent = Inner
-	})
-	
-	Library:Create('UIGradient', {
-		Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Library.AccentColor),
-			ColorSequenceKeypoint.new(1, Library.AccentColor)
-		},
-		Transparency = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(1, 0.3)
-		},
-		Parent = Stroke
-	})
-	
-	Library:AddToRegistry(Inner, {
-		BackgroundColor3 = 'MainColor';
-	})
-	Library:AddToRegistry(Stroke, {
-		Color = 'AccentColor';
-	})
+
+Library:Create('UICorner', {
+	CornerRadius = UDim.new(0, 6),
+	Parent = Inner
+})
+
+local Stroke = Library:Create('UIStroke', {
+	Color = Library.AccentColor,
+	Thickness = 2,
+	Transparency = 0.25,
+	ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	Parent = Inner
+})
+
+Library:Create('UIGradient', {
+	Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Library.AccentColor),
+		ColorSequenceKeypoint.new(1, Library.AccentColor)
+	},
+	Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(1, 0.3)
+	},
+	Parent = Stroke
+})
+
+-- Pulse animation
+task.spawn(function()
+	local t = 0
+	while Inner.Parent do
+		t += task.wait()
+		local pulse = 0.2 + 0.05 * math.sin(t * 2)
+		Stroke.Transparency = pulse
+	end
+end)
+
+-- Theme registry
+Library:AddToRegistry(Inner, {
+	BackgroundColor3 = 'MainColor';
+})
+Library:AddToRegistry(Stroke, {
+	Color = 'AccentColor';
+})
+Library:AddToRegistry(GlowBackground, {
+	ImageColor3 = 'AccentColor';
+})
+
 
 
 	    local WindowLabel = Library:CreateLabel2({
