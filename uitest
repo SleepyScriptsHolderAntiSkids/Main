@@ -2779,20 +2779,50 @@ function Library:CreateWindow(...)
 	Library:MakeDraggable(Outer, 25);
 
 	local Inner = Library:Create('Frame', {
-		BackgroundColor3 = Library.MainColor;
-		BorderColor3 = Library.AccentColor;
-		BorderMode = Enum.BorderMode.Inset;
-                BorderSizePixel = 4;
-		Position = UDim2.new(0, 1, 0, 1);
-		Size = UDim2.new(1, -2, 1, -2);
-		ZIndex = 1;
-		Parent = Outer;
-	});
+	BackgroundColor3 = Library.MainColor,
+	BorderSizePixel = 0,
+	Position = UDim2.new(0, 1, 0, 1),
+	Size = UDim2.new(1, -2, 1, -2),
+	ZIndex = 1,
+	Parent = Outer
+})
 
-	Library:AddToRegistry(Inner, {
-		BackgroundColor3 = 'MainColor';
-		BorderColor3 = 'AccentColor';
-	});
+-- Optional: Rounded corners
+Library:Create('UICorner', {
+	CornerRadius = UDim.new(0, 6),
+	Parent = Inner
+})
+
+-- Glowing border using UIStroke
+local Stroke = Library:Create('UIStroke', {
+	Color = Library.AccentColor,
+	Thickness = 2,
+	Transparency = 0.2,
+	ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+	Parent = Inner
+})
+
+-- Optional: Gradient for glow variation
+Library:Create('UIGradient', {
+	Color = ColorSequence.new{
+		ColorSequenceKeypoint.new(0, Library.AccentColor),
+		ColorSequenceKeypoint.new(1, Library.AccentColor)
+	},
+	Transparency = NumberSequence.new{
+		NumberSequenceKeypoint.new(0, 0.3),
+		NumberSequenceKeypoint.new(1, 0.3)
+	},
+	Parent = Stroke
+})
+
+-- Register for theming
+Library:AddToRegistry(Inner, {
+	BackgroundColor3 = 'MainColor';
+})
+Library:AddToRegistry(Stroke, {
+	Color = 'AccentColor';
+})
+
 
     local WindowLabel = Library:CreateLabel2({
         Position = UDim2.new(0, 7, 0, 0);
