@@ -2779,10 +2779,8 @@ function Library:CreateWindow(...)
 	Library:MakeDraggable(Outer, 25);
 
 	local Inner = Library:Create('Frame', {
-    BackgroundColor3 = Library.MainColor;
-    BorderColor3 = Library.AccentColor;
-    BorderMode = Enum.BorderMode.Inset;
-    BorderSizePixel = 4;
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25); -- Dark subtle background
+    BorderSizePixel = 0; -- No harsh border
     Position = UDim2.new(0, 1, 0, 1);
     Size = UDim2.new(1, -2, 1, -2);
     ZIndex = 1;
@@ -2791,38 +2789,33 @@ function Library:CreateWindow(...)
 
 -- Rounded Corners
 Library:Create('UICorner', {
-    CornerRadius = UDim.new(0, 8); -- You can adjust the 8 for sharper or softer corners
+    CornerRadius = UDim.new(0, 6);
     Parent = Inner;
 });
 
--- Gradient Accent Effect
-Library:Create('UIGradient', {
-    Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Library.AccentColor);
-        ColorSequenceKeypoint.new(1, Library.AccentColor:lerp(Color3.new(1, 1, 1), 0.2));
-    };
-    Rotation = 45;
+-- Thin Neon-like Accent Outline
+local Outline = Library:Create('Frame', {
+    BackgroundTransparency = 1;
+    BorderSizePixel = 1;
+    BorderColor3 = Library.AccentColor;
+    Size = UDim2.new(1, 0, 1, 0);
+    Position = UDim2.new(0, 0, 0, 0);
+    ZIndex = 2;
     Parent = Inner;
 });
 
--- Soft Glow Effect
+-- Soft Glow Shadow (optional, subtle)
 local Glow = Library:Create('ImageLabel', {
-    Image = "rbxassetid://1316045217"; -- Soft circle glow asset
+    Image = "rbxassetid://1316045217"; -- Soft blur shadow image
     ImageColor3 = Library.AccentColor;
-    ImageTransparency = 0.85;
+    ImageTransparency = 0.9;
     ScaleType = Enum.ScaleType.Slice;
     SliceCenter = Rect.new(10, 10, 118, 118);
-    Size = UDim2.new(1, 12, 1, 12);
-    Position = UDim2.new(0, -6, 0, -6);
+    Size = UDim2.new(1, 16, 1, 16);
+    Position = UDim2.new(0, -8, 0, -8);
     ZIndex = 0;
     Parent = Inner;
 });
-
-Library:AddToRegistry(Inner, {
-    BackgroundColor3 = 'MainColor';
-    BorderColor3 = 'AccentColor';
-});
-
 
     local WindowLabel = Library:CreateLabel2({
         Position = UDim2.new(0, 7, 0, 0);
