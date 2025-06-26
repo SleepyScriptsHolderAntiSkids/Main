@@ -2765,19 +2765,6 @@ function Library:CreateWindow(...)
 		Tabs = {};
 	};
 
-
-
-
-
-
-
-
-
-
-
-
-
-	
 	local Outer = Library:Create('Frame', {
 		AnchorPoint = Config.AnchorPoint,
 		BackgroundColor3 = Color3.new(0, 0, 0);
@@ -2791,88 +2778,61 @@ function Library:CreateWindow(...)
 
 	Library:MakeDraggable(Outer, 25);
 
-
-	local Glow = Library:Create('Frame', {
-	AnchorPoint = Vector2.new(0.5, 0.5),
-	BackgroundColor3 = Library.AccentColor,
-	BorderSizePixel = 0,
-	Position = UDim2.new(0.5, 0, 0.5, 0),
-	Size = UDim2.new(1, 40, 1, 40), -- bigger than Inner
-	ZIndex = 0, -- behind Outer’s content
-	Parent = Outer
-})
-
-Library:Create('UICorner', {
-	CornerRadius = UDim.new(0, 10),
-	Parent = Glow
-})
-
-Library:Create('UIGradient', {
-	Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Library.AccentColor),
-		ColorSequenceKeypoint.new(1, Color3.new(0, 0, 0))
-	},
-	Transparency = NumberSequence.new{
-		NumberSequenceKeypoint.new(0, 0.6),
-		NumberSequenceKeypoint.new(1, 1)
-	},
-	Parent = Glow
-})
-
-
 	local Inner = Library:Create('Frame', {
-	BackgroundColor3 = Library.MainColor,
-	BorderSizePixel = 0,
-	Position = UDim2.new(0, 1, 0, 1),
-	Size = UDim2.new(1, -2, 1, -2),
-	ZIndex = 1,
-	Parent = Outer
-})
-	
-	Library:Create('UICorner', {
-		CornerRadius = UDim.new(0, 6),
-		Parent = Inner
-	})
-	
-	local Stroke = Library:Create('UIStroke', {
-		Color = Library.AccentColor,
-		Thickness = 2,
-		Transparency = 0.2,
-		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-		Parent = Inner
-	})
-	
-	Library:Create('UIGradient', {
-		Color = ColorSequence.new{
-			ColorSequenceKeypoint.new(0, Library.AccentColor),
-			ColorSequenceKeypoint.new(1, Library.AccentColor)
-		},
-		Transparency = NumberSequence.new{
-			NumberSequenceKeypoint.new(0, 0.3),
-			NumberSequenceKeypoint.new(1, 0.3)
-		},
-		Parent = Stroke
-	})
-	
-	Library:AddToRegistry(Inner, {
-		BackgroundColor3 = 'MainColor';
-	})
-	Library:AddToRegistry(Stroke, {
-		Color = 'AccentColor';
-	})
+    BackgroundColor3 = Library.MainColor;
+    BorderColor3 = Library.AccentColor;
+    BorderMode = Enum.BorderMode.Inset;
+    BorderSizePixel = 4;
+    Position = UDim2.new(0, 1, 0, 1);
+    Size = UDim2.new(1, -2, 1, -2);
+    ZIndex = 1;
+    Parent = Outer;
+});
 
-	
+-- Rounded Corners
+Library:Create('UICorner', {
+    CornerRadius = UDim.new(0, 8); -- You can adjust the 8 for sharper or softer corners
+    Parent = Inner;
+});
+
+-- Gradient Accent Effect
+Library:Create('UIGradient', {
+    Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Library.AccentColor);
+        ColorSequenceKeypoint.new(1, Library.AccentColor:lerp(Color3.new(1, 1, 1), 0.2));
+    };
+    Rotation = 45;
+    Parent = Inner;
+});
+
+-- Soft Glow Effect
+local Glow = Library:Create('ImageLabel', {
+    Image = "rbxassetid://1316045217"; -- Soft circle glow asset
+    ImageColor3 = Library.AccentColor;
+    ImageTransparency = 0.85;
+    ScaleType = Enum.ScaleType.Slice;
+    SliceCenter = Rect.new(10, 10, 118, 118);
+    Size = UDim2.new(1, 12, 1, 12);
+    Position = UDim2.new(0, -6, 0, -6);
+    ZIndex = 0;
+    Parent = Inner;
+});
+
+Library:AddToRegistry(Inner, {
+    BackgroundColor3 = 'MainColor';
+    BorderColor3 = 'AccentColor';
+});
 
 
-	    local WindowLabel = Library:CreateLabel2({
-	        Position = UDim2.new(0, 7, 0, 0);
-	        Size = UDim2.new(0, 0, 0, 25);
-	        RichText = true;
-	        Text = Config.Title or '';
-	        TextXAlignment = Enum.TextXAlignment.Left;
-	        ZIndex = 1;
-	        Parent = Inner;
-	    });
+    local WindowLabel = Library:CreateLabel2({
+        Position = UDim2.new(0, 7, 0, 0);
+        Size = UDim2.new(0, 0, 0, 25);
+        RichText = true;
+        Text = Config.Title or '';
+        TextXAlignment = Enum.TextXAlignment.Left;
+        ZIndex = 1;
+        Parent = Inner;
+    });
 
 	local MainSectionOuter = Library:Create('Frame', {
 		BackgroundColor3 = Library.BackgroundColor;
