@@ -2786,53 +2786,49 @@ function Library:CreateWindow(...)
 	ZIndex = 1,
 	Parent = Outer
 })
-
--- Optional: Rounded corners
-Library:Create('UICorner', {
-	CornerRadius = UDim.new(0, 6),
-	Parent = Inner
-})
-
--- Glowing border using UIStroke
-local Stroke = Library:Create('UIStroke', {
-	Color = Library.AccentColor,
-	Thickness = 2,
-	Transparency = 0.2,
-	ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-	Parent = Inner
-})
-
--- Optional: Gradient for glow variation
-Library:Create('UIGradient', {
-	Color = ColorSequence.new{
-		ColorSequenceKeypoint.new(0, Library.AccentColor),
-		ColorSequenceKeypoint.new(1, Library.AccentColor)
-	},
-	Transparency = NumberSequence.new{
-		NumberSequenceKeypoint.new(0, 0.3),
-		NumberSequenceKeypoint.new(1, 0.3)
-	},
-	Parent = Stroke
-})
-
--- Register for theming
-Library:AddToRegistry(Inner, {
-	BackgroundColor3 = 'MainColor';
-})
-Library:AddToRegistry(Stroke, {
-	Color = 'AccentColor';
-})
+	
+	Library:Create('UICorner', {
+		CornerRadius = UDim.new(0, 6),
+		Parent = Inner
+	})
+	
+	local Stroke = Library:Create('UIStroke', {
+		Color = Library.AccentColor,
+		Thickness = 2,
+		Transparency = 0.2,
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Parent = Inner
+	})
+	
+	Library:Create('UIGradient', {
+		Color = ColorSequence.new{
+			ColorSequenceKeypoint.new(0, Library.AccentColor),
+			ColorSequenceKeypoint.new(1, Library.AccentColor)
+		},
+		Transparency = NumberSequence.new{
+			NumberSequenceKeypoint.new(0, 0.3),
+			NumberSequenceKeypoint.new(1, 0.3)
+		},
+		Parent = Stroke
+	})
+	
+	Library:AddToRegistry(Inner, {
+		BackgroundColor3 = 'MainColor';
+	})
+	Library:AddToRegistry(Stroke, {
+		Color = 'AccentColor';
+	})
 
 
-    local WindowLabel = Library:CreateLabel2({
-        Position = UDim2.new(0, 7, 0, 0);
-        Size = UDim2.new(0, 0, 0, 25);
-        RichText = true;
-        Text = Config.Title or '';
-        TextXAlignment = Enum.TextXAlignment.Left;
-        ZIndex = 1;
-        Parent = Inner;
-    });
+	    local WindowLabel = Library:CreateLabel2({
+	        Position = UDim2.new(0, 7, 0, 0);
+	        Size = UDim2.new(0, 0, 0, 25);
+	        RichText = true;
+	        Text = Config.Title or '';
+	        TextXAlignment = Enum.TextXAlignment.Left;
+	        ZIndex = 1;
+	        Parent = Inner;
+	    });
 
 	local MainSectionOuter = Library:Create('Frame', {
 		BackgroundColor3 = Library.BackgroundColor;
